@@ -142,10 +142,10 @@ void ImageFlow::getImage(cv::Mat &image)
 
     if (files[fileIndex].type == VIDEO)
     {
-        bool stopStream = false;
+        bool isPaused = false;
         do
         {
-            if (stopStream == true)
+            if (isPaused == true)
             {
                 keyCode = cv::waitKey(0);
                 if (SPACE_KEY)
@@ -159,7 +159,7 @@ void ImageFlow::getImage(cv::Mat &image)
                 keyCode = cv::waitKey(1);
                 if (SPACE_KEY)
                 {
-                    stopStream = true;
+                    isPaused = true;
                     continue;
                 }
             }
@@ -203,7 +203,7 @@ void ImageFlow::getImage(cv::Mat &image)
                 return;
             }
         }
-        while (stopStream == true);
+        while (isPaused == true);
 
         capture.read(image);
         while (image.empty())
@@ -284,27 +284,6 @@ void ImageFlow::getImage(cv::Mat &image)
 }
 
 /*
-    "getImage()" function puts acquired image and its file type to the passed parameters.
-    File type parameter is "ImageFlow::file_type".
-*/
-inline void ImageFlow::getImage(cv::Mat &image, file_type &fileType, std::string &fileName)
-{
-    getImage(image);
-
-    fileType = files[fileIndex].type;
-    fileName = files[fileIndex].name;
-
-    return;
-}
-
-inline void ImageFlow::operator>> (cv::Mat &image)
-{
-    getImage(image);
-
-    return;
-}
-
-/*
     "getKeyCode()" function puts ASCII code value of the pressed keyboard key to the passed parameter.
 */
 void ImageFlow::getKeyCode(int &keyCode) const
@@ -327,7 +306,7 @@ void ImageFlow::intro() const
     printf("ImageFlow\n\n");
 
     printf("Control keys:\n");
-    printf("[ space ] - stop video stream.\n");
+    printf("[ space ] - pause video stream.\n");
     printf("  [ esc ] - terminate the program.\n");
     printf("    [ → ] - skip to the next image/video.\n");
     printf("    [ ← ] - back to the previous image/video.\n");

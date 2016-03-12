@@ -62,13 +62,28 @@ public:
 
     /*
         Extended function that acquires image (video frame), type and name of the file.
+        "getImage()" function puts acquired image and its file type to the passed parameters.
+        File type parameter is "ImageFlow::file_type".
     */
-    inline void getImage(cv::Mat &image, file_type &fileType, std::string &fileName);
+    inline void getImage(cv::Mat &image, file_type &fileType, std::string &fileName)
+    {
+        getImage(image);
+
+        fileType = files[fileIndex].type;
+        fileName = files[fileIndex].name;
+
+        return;
+    }
 
     /*
         Analog of "getImage(cv::Mat &image)" function.
     */
-    virtual inline void operator>> (cv::Mat &image);
+    inline void operator>> (cv::Mat &image)
+    {
+        getImage(image);
+
+        return;
+    }
 
     /*
         Function assigns pressed key code to the passed parameter.
