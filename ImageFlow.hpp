@@ -11,6 +11,7 @@
 
 #include <opencv2/highgui/highgui.hpp>
 #include <dirent.h>
+#include <sys/stat.h>
 
 /*
     Class for video capturing from video files or image sequences.
@@ -125,7 +126,7 @@ public:
     enum
     {
         PATH_ERR1 = 101, PATH_ERR2 = 102,
-        EXT_ERR   = 200,
+        EXT_ERR1  = 201, EXT_ERR2  = 202,
         INDX_ERR1 = 301, INDX_ERR2 = 302,
         CAPT_ERR  = 400,
         EXIT      = 500,
@@ -147,7 +148,7 @@ private:
     std::string message;
 
     explicit ImfExc(const int &code);
-    explicit ImfExc(const int &code, const std::string &strVal);
+    explicit ImfExc(const int &code, const std::string &extraInfo);
 };
 
 #endif /* ImageFlow_hpp */

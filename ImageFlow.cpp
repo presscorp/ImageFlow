@@ -8,12 +8,11 @@
 
 #include "ImageFlow.hpp"
 
-#define SPACE_KEY keyCode == 32
 #define ESC_KEY   keyCode == 27
+#define SPACE_KEY keyCode == 32
 
-#ifdef _WIN32
+#if defined _WIN32
 
-    const char SLASH = '\\';
     #define UP_KEY    keyCode == 2490368
 /*  #define DOWN_KEY  keyCode == 2621440  */
     #define LEFT_KEY  keyCode == 2424832
@@ -21,7 +20,6 @@
 
 #elif defined __unix__ || defined __APPLE__
 
-    const char SLASH = '/';
     #define UP_KEY    keyCode == 63232
 /*  #define DOWN_KEY  keyCode == 63233  */
     #define LEFT_KEY  keyCode == 63234
@@ -29,6 +27,9 @@
 
 #endif
 
+/*
+    Default constructor.
+*/
 ImageFlow::ImageFlow()
 :  pathIsSet(false),
    keyCode(0)
@@ -48,6 +49,9 @@ ImageFlow::ImageFlow(const std::string &path, const int &fileIndex)
     (*this)(path, fileIndex);
 }
 
+/*
+    Destructor.
+*/
 ImageFlow::~ImageFlow() {}
 
 /*
@@ -219,7 +223,7 @@ void ImageFlow::getImage(cv::Mat &image)
             capture.read(image);
         }
     }
-    else // (files[fileIndex].type == IMAGE)
+    else /* if (files[fileIndex].type == IMAGE) */
     {
         while (true)
         {
@@ -317,10 +321,11 @@ void ImageFlow::intro() const
 
 /*
     "listDir()" function performs directory listing.
+    Can handle case when "path" points to a target file, not a directory.
 */
 void ImageFlow::listDir(const std::string &path)
 {
-    DIR *dir = opendir(path.c_str());
+    DIR *pDir = opendir(path.c_str());
     struct dirent *entry;
     std::string name;
     std::string fileExt;
@@ -330,86 +335,111 @@ void ImageFlow::listDir(const std::string &path)
         /* IMAGE: */ ".bmp", ".jpg", ".jpeg", ".png"
     };
 
-    if (dir != NULL)
-    {
-        dirPath = path.back() == SLASH ? path : path + SLASH;
-        while ((entry = readdir(dir)))
-        {
-            name = entry->d_name;
-            if (name.front() != '.') // Hidden files in UNIX which start from dot character
-            {
-                size_t npos = name.find_last_of(".");
-                if (static_cast<int>(npos) < 1) // Not preferred extension
-                {
-                    continue;
-                }
+#if defined _WIN32
 
-                fileExt = name.substr(npos);
-                std::transform(fileExt.begin(), fileExt.end(), fileExt.begin(), ::tolower);
-                for (size_t i = 0; i < EXTENSIONS.size(); ++i)
-                {
-                    if (fileExt == EXTENSIONS[i])
-                    {
-                        File file;
-                        file.name = name;
-                        file.type = i > 2 ? IMAGE : VIDEO;
-                        files.push_back(file);
-                        break;
-                    }
-                }
+    const char SLASH_CHAR = '\\';
+
+#elif defined __unix__ || defined __APPLE__
+
+    const char SLASH_CHAR = '/';
+
+#endif
+
+    if (pDir != NULL)
+    {
+        dirPath = path.back() == SLASH_CHAR ? path : path + SLASH_CHAR;
+
+        while ((entry = readdir(pDir)))
+        {
+            /* Skip folders, hidden files: */
+            if (entry->d_name[0] == '.' || entry->d_type != DT_REG)
+            {
+                continue;
             }
-        }
 
-        (void)closedir(dir);
+            name = entry->d_name;
+            size_t npos = name.find_last_of(".");
 
-        if (files.empty())
-        {
-            throw ImfExc(ImfExc::EXT_ERR, path);
-        }
-    }
-    else
-    {
-        size_t npos = path.find_last_of(SLASH) + 1;
-        dirPath = path.substr(0, npos);
-        dir = opendir(dirPath.c_str());
-        std::string tmprName = path.substr(npos);
-        if (dir != NULL)
-        {
-            while ((entry = readdir(dir)))
+            /* Skip files with no extension: */
+            if (static_cast<int>(npos) < 0)
             {
-                name = entry->d_name;
-                if (name == tmprName)
+                continue;
+            }
+
+            fileExt = name.substr(npos);
+            std::transform(fileExt.begin(), fileExt.end(), fileExt.begin(), ::tolower);
+            for (size_t i = 0; i < EXTENSIONS.size(); ++i)
+            {
+                if (fileExt == EXTENSIONS[i])
                 {
-                    size_t npos = name.find_last_of(".");
-                    if (static_cast<int>(npos) < 1)
-                    {
-                        break;
-                    }
-
-                    fileExt = name.substr(npos);
-                    std::transform(fileExt.begin(), fileExt.end(), fileExt.begin(), ::tolower);
-                    for (size_t i = 0; i < EXTENSIONS.size(); ++i)
-                    {
-                        if (fileExt == EXTENSIONS[i])
-                        {
-                            File file;
-                            file.name = name;
-                            file.type = i > 2 ? IMAGE : VIDEO;
-                            files.push_back(file);
-                            break;
-                        }
-                    }
-
+                    File file;
+                    file.name = name;
+                    file.type = i > 2 ? IMAGE : VIDEO;
+                    files.push_back(file);
                     break;
                 }
             }
+        }
 
-            (void)closedir(dir);
+        (void)closedir(pDir);
+
+        if (files.empty())
+        {
+            throw ImfExc(ImfExc::EXT_ERR1, path);
+        }
+    }
+    else /* if "path" is a target file, not a directory */
+    {
+        size_t npos = path.find_last_of(SLASH_CHAR) + 1;
+        dirPath = path.substr(0, npos);
+        name = path.substr(npos);
+
+#if defined _WIN32
+
+        struct _stat buffer;
+
+        /* Check file for existence: */
+        if (_stat(path.c_str(), &buffer) != 0)
+        {
+
+#elif defined __unix__ || defined __APPLE__
+
+        struct stat buffer;
+
+        /* Check file for existence: */
+        if (stat(path.c_str(), &buffer) != 0)
+        {
+
+#endif
+
+            throw ImfExc(ImfExc::PATH_ERR2, path);
+        }
+
+        npos = name.find_last_of(".");
+
+        /* If file has no extension: */
+        if (static_cast<int>(npos) < 0)
+        {
+            throw ImfExc(ImfExc::EXT_ERR2, path);
+        }
+
+        fileExt = name.substr(npos);
+        std::transform(fileExt.begin(), fileExt.end(), fileExt.begin(), ::tolower);
+        for (size_t i = 0; i < EXTENSIONS.size(); ++i)
+        {
+            if (fileExt == EXTENSIONS[i])
+            {
+                File file;
+                file.name = name;
+                file.type = i > 2 ? IMAGE : VIDEO;
+                files.push_back(file);
+                break;
+            }
         }
 
         if (files.empty())
         {
-            throw ImfExc(ImfExc::PATH_ERR2, path);
+            throw ImfExc(ImfExc::EXT_ERR2, path);
         }
     }
 
@@ -450,6 +480,10 @@ void ImageFlow::strTimeToMsec(const std::string &strTime, double &msec)
     return;
 }
 
+/*
+    Private constructor of "ImageFlow Exception" class.
+    It accepts exception code and assigns corresponding message.
+*/
 ImfExc::ImfExc(const int &code)
 :   code(code)
 {
@@ -475,33 +509,41 @@ ImfExc::ImfExc(const int &code)
     }
 }
 
-ImfExc::ImfExc(const int &code, const std::string &strVal)
+/*
+    Private constructor of "ImageFlow Exception" class.
+    It accepts exception code, string parameter and assigns corresponding message.
+*/
+ImfExc::ImfExc(const int &code, const std::string &extraInfo)
 :   code(code)
 {
     if (code == PATH_ERR2)
     {
-        message = "\"" + strVal + "\" file does not exist!";
+        message = "\"" + extraInfo + "\" file does not exist!";
     }
-    else if (code == EXT_ERR)
+    else if (code == EXT_ERR1)
     {
-        message = "No preferred file formats in \"" + strVal + "\"!";
+        message = "No preferred file formats in \"" + extraInfo + "\"!";
+    }
+    else if (code == EXT_ERR2)
+    {
+        message = "Incompatible file format in \"" + extraInfo + "\"!";
     }
     else if (code == INDX_ERR2)
     {
-        message = "Invalid starting index! Choose within the range 0-" + strVal + ".";
+        message = "Invalid starting index! Choose within the range 0-" + extraInfo + ".";
     }
     else if (code == CAPT_ERR)
     {
-        message = "Couldn't open \"" + strVal + "\" file.";
+        message = "Couldn't open \"" + extraInfo + "\" file.";
     }
     else if (code == TIME_ERR1)
     {
-        message = "Can't set time for image file \"" + strVal + "\"!";
+        message = "Can't set time for image file \"" + extraInfo + "\"!";
     }
 }
 
 /*
-    Function which returns ImageFlow Exception message.
+    "what()" function which returns "ImageFlow" exception message.
 */
 const char* ImfExc::what() const _NOEXCEPT
 {
