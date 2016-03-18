@@ -10,4 +10,4 @@ Control keys:<br>
 Provided control keys work only when you call `cv::imshow()` function. <b>main.cpp</b> file contains demo.<br><br>
 Dependencies:<br>
 * <b>OpenCV 3.1.0</b> library (link <b>core</b>, <b>videoio</b> and <b>highgui</b> dll files)
-* <b>dirent.h</b> file (for Windows OS you will need to download it from the web, UNIX based OS comes with it by default)
+* <b>dirent.h</b> file (for Windows OS you can find it here http://softagalleria.net/dirent.php or just download "dirent.h" directly from https://github.com/tronkko/dirent, UNIX based OS comes with it by default)
