@@ -13,6 +13,12 @@ int main()
     try
     {
         ImageFlow imflow("directory_path", 0);
+
+        /*
+            Do not place "cv::Mat" declaration inside the loop.
+            "ImageFlow" may not read frame if you paused a video or trying
+            to read image files until you press proper control key.
+        */
         cv::Mat image;
 
         while (true)
