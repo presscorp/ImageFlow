@@ -332,7 +332,7 @@ void ImageFlow::listDir(const std::string &path)
     const std::vector<std::string> EXTENSIONS =
     {
         /* VIDEO: */ ".avi", ".mov", ".mp4",
-        /* IMAGE: */ ".bmp", ".jpg", ".jpeg", ".png"
+        /* IMAGE: */ ".bmp", ".jpg", ".jpeg", ".png", ".tiff"
     };
 
 #if defined _WIN32
