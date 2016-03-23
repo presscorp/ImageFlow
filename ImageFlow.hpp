@@ -77,7 +77,7 @@ public:
     }
 
     /*
-        Analog of "getImage(cv::Mat &image)" function.
+        Analog of "getImage()" function.
     */
     inline void operator>> (cv::Mat &image)
     {
@@ -87,9 +87,12 @@ public:
     }
 
     /*
-        Function assigns pressed key code to the passed parameter.
+        "getKeyCode()" function returns ASCII code value of the pressed keyboard key.
     */
-    void getKeyCode(int &keyCode) const;
+    inline int getKeyCode() const
+    {
+        return keyCode;
+    }
 
 private:
     struct File
@@ -142,7 +145,7 @@ public:
     /*
         Exception message.
     */
-    virtual const char * what() const _NOEXCEPT;
+    virtual const char* what() const _NOEXCEPT;
 
 private:
     std::string message;

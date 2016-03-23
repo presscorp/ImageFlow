@@ -32,7 +32,7 @@
 */
 ImageFlow::ImageFlow()
 :  pathIsSet(false),
-   keyCode(0)
+   keyCode(-1)
 {
     intro();
 }
@@ -43,7 +43,7 @@ ImageFlow::ImageFlow()
 */
 ImageFlow::ImageFlow(const std::string &path, const int &fileIndex)
 :  pathIsSet(false),
-   keyCode(0)
+   keyCode(-1)
 {
     intro();
     (*this)(path, fileIndex);
@@ -144,160 +144,117 @@ void ImageFlow::getImage(cv::Mat &image)
         throw ImfExc(ImfExc::PATH_ERR1);
     }
 
+    keyCode = cv::waitKey(1);
+
     if (files[fileIndex].type == VIDEO)
     {
-        bool isPaused = false;
-        do
+        static bool isPaused = false;
+
+        if (SPACE_KEY)
         {
-            if (isPaused == true)
-            {
-                keyCode = cv::waitKey(0);
-                if (SPACE_KEY)
-                {
-                    keyCode = -1;
-                    break;
-                }
-            }
-            else
-            {
-                keyCode = cv::waitKey(1);
-                if (SPACE_KEY)
-                {
-                    isPaused = true;
-                    continue;
-                }
-            }
-
-            if (ESC_KEY)
-            {
-                throw ImfExc(ImfExc::EXIT);
-            }
-            else if (RIGHT_KEY)
-            {
-                if (fileIndex + 1 == files.size())
-                {
-                    throw ImfExc(ImfExc::END);
-                }
-
-                printf("Video is skipped to the next.\n");
-                setFileIndex(fileIndex + 1);
-                break;
-            }
-            else if (LEFT_KEY)
-            {
-                if (fileIndex == 0)
-                {
-                    printf("You are at the file with [0] index!\n");
-                    setFileIndex(fileIndex);
-                }
-                else
-                {
-                    printf("Video is skipped to the previous.\n");
-                    setFileIndex(fileIndex - 1);
-                }
-
-                capture.read(image);
-                return;
-            }
-            else if (UP_KEY)
-            {
-                printf("Video is repeated.\n");
-                setFileIndex(fileIndex);
-                capture.read(image);
-                return;
-            }
+            isPaused = !isPaused;
         }
-        while (isPaused == true);
-
-        capture.read(image);
-        while (image.empty())
+        else if (RIGHT_KEY)
         {
-            printf("Video is ended.\n");
-
             if (fileIndex + 1 == files.size())
             {
                 throw ImfExc(ImfExc::END);
             }
 
+            printf("Video is skipped to the next.\n");
             setFileIndex(fileIndex + 1);
+            isPaused = false;
+        }
+        else if (LEFT_KEY)
+        {
+            if (fileIndex == 0)
+            {
+                printf("You are at the file with [0] index!\n");
+                setFileIndex(fileIndex);
+            }
+            else
+            {
+                printf("Video is skipped to the previous.\n");
+                setFileIndex(fileIndex - 1);
+            }
+
+            isPaused = false;
+        }
+        else if (UP_KEY)
+        {
+            printf("Video is repeated.\n");
+            setFileIndex(fileIndex);
+            isPaused = false;
+        }
+        else if (ESC_KEY)
+        {
+            throw ImfExc(ImfExc::EXIT);
+        }
+
+        if (isPaused == false)
+        {
             capture.read(image);
+            while (image.empty())
+            {
+                printf("Video is ended.\n");
+
+                if (fileIndex + 1 == files.size())
+                {
+                    throw ImfExc(ImfExc::END);
+                }
+
+                setFileIndex(fileIndex + 1);
+                capture.read(image);
+            }
         }
     }
     else /* if (files[fileIndex].type == IMAGE) */
     {
-        while (true)
-        {
-            if (keyCode == 0)
-            {
-                keyCode = -1;
-                break;
-            }
+        static bool isFirstImage = true;
 
-            keyCode = cv::waitKey(0);
-
-            if (ESC_KEY)
-            {
-                throw ImfExc(ImfExc::EXIT);
-            }
-            else if (RIGHT_KEY)
-            {
-                if (fileIndex + 1 == files.size())
-                {
-                    throw ImfExc(ImfExc::END);
-                }
-                else
-                {
-                    printf("Image is skipped to the next.\n");
-                    setFileIndex(fileIndex + 1);
-                }
-
-                break;
-            }
-            else if (LEFT_KEY)
-            {
-                if (fileIndex == 0)
-                {
-                    printf("You are at the file with [0] index!\n");
-                    setFileIndex(fileIndex);
-                }
-                else
-                {
-                    printf("Image is skipped to the previous.\n");
-                    setFileIndex(fileIndex - 1);
-                }
-
-                capture.read(image);
-                return;
-            }
-        }
-
-        capture.read(image);
-        while (image.empty())
+        if (RIGHT_KEY)
         {
             if (fileIndex + 1 == files.size())
             {
                 throw ImfExc(ImfExc::END);
             }
+            else
+            {
+                printf("Image is skipped to the next.\n");
+                setFileIndex(fileIndex + 1);
+            }
 
-            setFileIndex(fileIndex + 1);
             capture.read(image);
         }
+        else if (LEFT_KEY)
+        {
+            if (fileIndex == 0)
+            {
+                printf("You are at the file with [0] index!\n");
+                setFileIndex(fileIndex);
+            }
+            else
+            {
+                printf("Image is skipped to the previous.\n");
+                setFileIndex(fileIndex - 1);
+            }
+
+            capture.read(image);
+        }
+        else if (ESC_KEY)
+        {
+            throw ImfExc(ImfExc::EXIT);
+        }
+        else if (isFirstImage)
+        {
+            if (image.empty() || (fileIndex > 0 && files[fileIndex - 1].type != VIDEO))
+            {
+                capture.read(image);
+            }
+
+            isFirstImage = false;
+        }
     }
-
-    return;
-}
-
-/*
-    "getKeyCode()" function puts ASCII code value of the pressed keyboard key to the passed parameter.
-*/
-void ImageFlow::getKeyCode(int &keyCode) const
-{
-    if (pathIsSet == false)
-    {
-        throw ImfExc(ImfExc::PATH_ERR1);
-    }
-
-    keyCode = this->keyCode;
 
     return;
 }
