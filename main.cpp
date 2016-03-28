@@ -17,8 +17,10 @@ int main()
 
         while (true)
         {
-            imflow >> image;
-            cv::imshow("ImageFlow", image);
+            if (imflow >> image)
+            {
+                cv::imshow("ImageFlow", image);
+            }
         }
     }
     catch (const ImfExc &imfExc)

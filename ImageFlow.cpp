@@ -50,11 +50,6 @@ ImageFlow::ImageFlow(const std::string &path, const int &fileIndex)
 }
 
 /*
-    Destructor.
-*/
-ImageFlow::~ImageFlow() {}
-
-/*
     "operator()" function lists the directory and appoints (optional) file index to start with.
 */
 void ImageFlow::operator() (const std::string &path, const int &fileIndex)
@@ -135,9 +130,10 @@ void ImageFlow::setTime(const std::string &strTime)
 
 /*
     "getImage()" function puts acquired image to the passed parameter.
+    It returns "true" if image is passed, otherwise "false".
     It also handles pressed control keys.
 */
-void ImageFlow::getImage(cv::Mat &image)
+bool ImageFlow::getImage(cv::Mat &image)
 {
     if (pathIsSet == false)
     {
@@ -206,6 +202,8 @@ void ImageFlow::getImage(cv::Mat &image)
                 setFileIndex(fileIndex + 1);
                 capture.read(image);
             }
+
+            return true;
         }
     }
     else /* if (files[fileIndex].type == IMAGE) */
@@ -225,6 +223,8 @@ void ImageFlow::getImage(cv::Mat &image)
             }
 
             capture.read(image);
+
+            return true;
         }
         else if (LEFT_KEY)
         {
@@ -240,6 +240,8 @@ void ImageFlow::getImage(cv::Mat &image)
             }
 
             capture.read(image);
+
+            return true;
         }
         else if (ESC_KEY)
         {
@@ -247,16 +249,18 @@ void ImageFlow::getImage(cv::Mat &image)
         }
         else if (isFirstImage)
         {
+            isFirstImage = false;
+
             if (image.empty() || (fileIndex > 0 && files[fileIndex - 1].type != VIDEO))
             {
                 capture.read(image);
-            }
 
-            isFirstImage = false;
+                return true;
+            }
         }
     }
 
-    return;
+    return false;
 }
 
 /*

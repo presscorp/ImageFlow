@@ -37,11 +37,6 @@ public:
     ImageFlow(const std::string &path, const int &fileIndex = 0);
 
     /*
-        Destructor.
-    */
-    ~ImageFlow();
-
-    /*
         Brackets operator assigns a new directory path and appoints (optional) file index to begin with.
     */
     void operator() (const std::string &path, const int &fileIndex = 0);
@@ -59,29 +54,24 @@ public:
     /*
         Function acquires image or video frame.
     */
-    void getImage(cv::Mat &image);
-
-    /*
-        Extended function that acquires image (video frame), type and name of the file.
-        "getImage()" function puts acquired image and its file type to the passed parameters.
-        File type parameter is "ImageFlow::file_type".
-    */
-    inline void getImage(cv::Mat &image, file_type &fileType, std::string &fileName)
-    {
-        getImage(image);
-
-        fileType = files[fileIndex].type;
-        fileName = files[fileIndex].name;
-
-        return;
-    }
+    bool getImage(cv::Mat &image);
 
     /*
         Analog of "getImage()" function.
     */
-    inline void operator>> (cv::Mat &image)
+    inline bool operator>> (cv::Mat &image)
     {
-        getImage(image);
+        return getImage(image);
+    }
+
+    /*
+        "getFileData()" function passes type and name of the currently opened file.
+        File type parameter is "ImageFlow::file_type".
+    */
+    inline void getFileInfo(file_type &fileType, std::string &fileName)
+    {
+        fileType = files[fileIndex].type;
+        fileName = files[fileIndex].name;
 
         return;
     }
