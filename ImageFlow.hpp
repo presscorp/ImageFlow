@@ -37,11 +37,6 @@ public:
     ImageFlow(const std::string &path, const int &fileIndex = 0);
 
     /*
-        Destructor.
-    */
-    ~ImageFlow();
-
-    /*
         Brackets operator assigns a new directory path and appoints (optional) file index to begin with.
     */
     void operator() (const std::string &path, const int &fileIndex = 0);
@@ -59,17 +54,22 @@ public:
     /*
         Function acquires image or video frame.
     */
-    void getImage(cv::Mat &image);
+    bool getImage(cv::Mat &image);
 
     /*
-        Extended function that acquires image (video frame), type and name of the file.
-        "getImage()" function puts acquired image and its file type to the passed parameters.
+        Analog of "getImage()" function.
+    */
+    inline bool operator>> (cv::Mat &image)
+    {
+        return getImage(image);
+    }
+
+    /*
+        "getFileData()" function passes type and name of the currently opened file.
         File type parameter is "ImageFlow::file_type".
     */
-    inline void getImage(cv::Mat &image, file_type &fileType, std::string &fileName)
+    inline void getFileInfo(file_type &fileType, std::string &fileName)
     {
-        getImage(image);
-
         fileType = files[fileIndex].type;
         fileName = files[fileIndex].name;
 
@@ -77,19 +77,12 @@ public:
     }
 
     /*
-        Analog of "getImage(cv::Mat &image)" function.
+        "getKeyCode()" function returns ASCII code value of the pressed keyboard key.
     */
-    inline void operator>> (cv::Mat &image)
+    inline int getKeyCode() const
     {
-        getImage(image);
-
-        return;
+        return keyCode;
     }
-
-    /*
-        Function assigns pressed key code to the passed parameter.
-    */
-    void getKeyCode(int &keyCode) const;
 
 private:
     struct File
@@ -142,7 +135,7 @@ public:
     /*
         Exception message.
     */
-    virtual const char * what() const _NOEXCEPT;
+    virtual const char* what() const _NOEXCEPT;
 
 private:
     std::string message;
